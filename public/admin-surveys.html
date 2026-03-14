@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Surveys | Kisaan Krushi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="brand text-center">
+            <i class="fa-solid fa-seedling text-success fs-3"></i>
+            <div class="text-success fw-bold mt-1">Kisaan Krushi</div>
+        </div>
+        <a href="admin-dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+        <a href="admin-surveys.html" class="nav-link active"><i class="fa-solid fa-clipboard-list"></i> All Surveys</a>
+        <a href="admin-users.html" class="nav-link"><i class="fa-solid fa-users-gear"></i> Manage Users</a>
+        <div style="position:absolute; bottom:0; width:100%; padding: 0 0.75rem 1rem;">
+            <button class="btn btn-outline-danger w-100 rounded-pill" id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket me-2"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-light d-md-none me-3" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+                <h4 class="mb-0 fw-bold">Survey Data</h4>
+            </div>
+            <button id="exportCsvBtn" class="btn btn-success"><i class="fa-solid fa-file-csv me-2"></i> Export CSV</button>
+        </div>
+
+        <div class="glass-card mb-4">
+            <form id="filterForm" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label text-muted fw-bold">District</label>
+                    <input type="text" id="filterDistrict" class="form-control" placeholder="E.g. Hyderabad">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted fw-bold">Crop</label>
+                    <input type="text" id="filterCrop" class="form-control" placeholder="E.g. Rice">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted fw-bold">Date From</label>
+                    <input type="date" id="filterDateFrom" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="glass-card">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Farmer Name</th>
+                            <th>Location</th>
+                            <th>Crop</th>
+                            <th>Surveyor</th>
+                            <th>Media</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="surveyTableBody">
+                        <tr><td colspan="7" class="text-center">Loading surveys...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let allSurveys = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            requireAuth('admin');
+            loadSurveys();
+
+            document.getElementById('filterForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                loadSurveys();
+            });
+
+            document.getElementById('exportCsvBtn').addEventListener('click', exportToCSV);
+        });
+
+        async function loadSurveys() {
+            try {
+                const district = document.getElementById('filterDistrict').value;
+                const crop = document.getElementById('filterCrop').value;
+                const dateFrom = document.getElementById('filterDateFrom').value;
+                
+                // We fake date filter since backend requires startDate and endDate for date
+                // Passing params if they exist
+                let queryStr = '?';
+                if(district) queryStr += `district=${encodeURIComponent(district)}&`;
+                if(crop) queryStr += `crop=${encodeURIComponent(crop)}&`;
+                if(dateFrom) queryStr += `startDate=${encodeURIComponent(dateFrom)}&endDate=2099-12-31`; // simplified
+
+                const data = await apiFetch(`/surveys${queryStr}`);
+                allSurveys = data;
+                renderTable(data);
+            } catch (error) {
+                showToast('Failed to load surveys', 'error');
+            }
+        }
+
+        function renderTable(surveys) {
+            const tbody = document.getElementById('surveyTableBody');
+            tbody.innerHTML = '';
+
+            if (surveys.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No surveys found</td></tr>';
+                return;
+            }
+
+            surveys.forEach(s => {
+                const dateStr = new Date(s.created_at).toLocaleDateString();
+                let mediaHtml = '';
+                if(s.photo_file) {
+                    mediaHtml += `<a href="/uploads/photos/${s.photo_file}" target="_blank"><img src="/uploads/photos/${s.photo_file}" class="table-media-preview me-2" alt="Photo"></a>`;
+                }
+                if(s.audio_file) {
+                    mediaHtml += `<audio controls style="height:30px; width:150px;"><source src="/uploads/audio/${s.audio_file}" type="audio/mpeg"></audio>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dateStr}</td>
+                    <td class="fw-bold">${s.farmer_name}<br><small class="text-muted fw-normal">${s.phone_number}</small></td>
+                    <td>${s.village}, ${s.district}</td>
+                    <td><span class="badge bg-success rounded-pill px-3">${s.crop}</span></td>
+                    <td>${s.surveyor_name || 'System'}</td>
+                    <td>${mediaHtml || '<span class="text-muted small">None</span>'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSurvey(${s.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteSurvey(id) {
+            if(!confirm('Are you sure you want to delete this survey?')) return;
+            try {
+                await apiFetch(`/surveys/${id}`, { method: 'DELETE' });
+                showToast('Survey deleted successfully', 'success');
+                loadSurveys();
+            } catch (error) {
+                showToast('Error deleting survey', 'error');
+            }
+        }
+
+        function exportToCSV() {
+            if(allSurveys.length === 0) {
+                showToast('No data to export', 'warning');
+                return;
+            }
+            
+            const headers = ['Date', 'Farmer Name', 'Phone', 'Village', 'Mandal', 'District', 'State', 'Crop', 'Suggestion', 'Lat', 'Lng', 'Surveyor'];
+            const rows = allSurveys.map(s => [
+                s.created_at, `"${s.farmer_name}"`, `"${s.phone_number}"`, `"${s.village}"`, `"${s.mandal}"`,
+                `"${s.district}"`, `"${s.state}"`, `"${s.crop}"`, `"${s.suggestion || ''}"`, s.latitude, s.longitude, `"${s.surveyor_name || ''}"`
+            ]);
+
+            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `surveys_export_${new Date().getTime()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

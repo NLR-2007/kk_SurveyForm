@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>My Surveys | Kisaan Krushi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Top Navbar -->
+    <div class="mobile-navbar">
+        <a href="survey-form.html" class="brand">
+            <i class="fa-solid fa-seedling text-success"></i> Kisaan Krushi
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <a href="survey-form.html" class="btn btn-sm btn-success rounded-pill px-3">
+                <i class="fa-solid fa-plus me-1"></i> New
+            </a>
+            <button class="btn btn-sm btn-outline-danger rounded-pill border-0" id="logoutBtn" title="Logout">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Surveyor Identity Bar -->
+    <div class="surveyor-info-bar" id="surveyorBar">
+        <div class="avatar" id="surveyorAvatar">-</div>
+        <div>
+            <div class="fw-bold" id="surveyorName">Loading...</div>
+            <div style="font-size:0.75rem; opacity:0.85;">Field Survey Agent</div>
+        </div>
+        <div class="ms-auto text-end" style="font-size:0.78rem; opacity:0.85;">
+            <i class="fa-regular fa-calendar me-1"></i>
+            <span id="todayDate"></span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="page-content">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">
+                <i class="fa-solid fa-clock-rotate-left text-success me-2"></i>My Survey History
+            </h5>
+            <span class="badge bg-success rounded-pill px-3 py-2 shadow-sm" id="surveyCount">...</span>
+        </div>
+
+        <div id="surveyList">
+            <!-- Loading spinner -->
+            <div class="text-center py-5" id="loadingSpinner">
+                <div class="spinner-border text-success" role="status"></div>
+                <p class="text-muted mt-2 small">Fetching your surveys...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="survey-form.html">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <small>Submit</small>
+        </a>
+        <a href="my-surveys.html" class="active">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <small>History</small>
+        </a>
+    </nav>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            requireAuth('user');
+
+            // Show surveyor name
+            const user = getCurrentUser();
+            if (user) {
+                document.getElementById('surveyorName').innerText = user.name || user.email;
+                const initials = (user.name || user.email || 'U').slice(0,1).toUpperCase();
+                document.getElementById('surveyorAvatar').innerText = initials;
+            }
+
+            // Show today's date
+            document.getElementById('todayDate').innerText = new Date().toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric'
+            });
+
+            loadMySurveys();
+        });
+
+        async function loadMySurveys() {
+            try {
+                const data = await apiFetch('/surveys/my-surveys');
+                const list = document.getElementById('surveyList');
+                document.getElementById('surveyCount').innerText = `${data.length} Record${data.length !== 1 ? 's' : ''}`;
+                document.getElementById('loadingSpinner').remove();
+
+                if (data.length === 0) {
+                    list.innerHTML = `
+                        <div class="glass-card text-center py-5 text-muted">
+                            <i class="fa-solid fa-box-open fs-1 mb-3 text-success opacity-25"></i>
+                            <h6>No surveys yet</h6>
+                            <p class="small">You haven't submitted any surveys.</p>
+                            <a href="survey-form.html" class="btn btn-success btn-sm rounded-pill px-4">
+                                <i class="fa-solid fa-plus me-1"></i> Create First Survey
+                            </a>
+                        </div>`;
+                    return;
+                }
+
+                data.forEach(s => {
+                    const card = document.createElement('div');
+                    card.className = 'survey-card';
+
+                    let mediaHtml = '';
+                    if (s.photo_file) {
+                        mediaHtml += `<img src="/uploads/photos/${s.photo_file}" class="survey-media-preview" alt="Farmer Photo" onerror="this.style.display='none'">`;
+                    }
+                    if (s.audio_file) {
+                        mediaHtml += `
+                            <div class="audio-player-container">
+                                <audio controls>
+                                    <source src="/uploads/audio/${s.audio_file}" type="audio/mpeg">
+                                </audio>
+                            </div>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="card-header-strip">
+                            <div>
+                                <div class="fw-bold">${s.farmer_name}</div>
+                                <div style="font-size:0.75rem; opacity:0.85;">
+                                    <i class="fa-solid fa-location-dot me-1"></i>${s.village}, ${s.district}
+                                </div>
+                            </div>
+                            <span class="badge bg-white text-success fw-bold">${s.crop}</span>
+                        </div>
+                        <div class="card-body-content">
+                            ${mediaHtml}
+                            <div class="row g-2 text-sm">
+                                <div class="col-6">
+                                    <span class="text-muted small"><i class="fa-solid fa-wheat-awn me-1"></i>Mandal</span>
+                                    <div class="fw-semibold small">${s.mandal}</div>
+                                </div>
+                                <div class="col-6">
+                                    <span class="text-muted small"><i class="fa-solid fa-globe me-1"></i>State</span>
+                                    <div class="fw-semibold small">${s.state}</div>
+                                </div>
+                                <div class="col-12">
+                                    <span class="text-muted small"><i class="fa-solid fa-phone me-1"></i>Contact</span>
+                                    <div class="fw-semibold small">${s.phone_number}</div>
+                                </div>
+                                ${s.suggestion ? `<div class="col-12">
+                                    <span class="text-muted small"><i class="fa-solid fa-comment me-1"></i>Notes</span>
+                                    <div class="small text-dark">${s.suggestion}</div>
+                                </div>` : ''}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                <small class="text-muted"><i class="fa-regular fa-calendar me-1"></i>${new Date(s.created_at).toLocaleDateString('en-IN')}</small>
+                                ${s.latitude ? `<small class="text-muted"><i class="fa-solid fa-satellite-dish me-1 text-success"></i>GPS Captured</small>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+            } catch (error) {
+                document.getElementById('loadingSpinner').remove();
+                document.getElementById('surveyList').innerHTML = `
+                    <div class="glass-card text-center py-4 text-danger">
+                        <i class="fa-solid fa-triangle-exclamation fs-2 mb-2"></i>
+                        <p class="mb-0">Failed to load your surveys.<br><small class="text-muted">Check your connection and try again.</small></p>
+                    </div>`;
+            }
+        }
+    </script>
+</body>
+</html>

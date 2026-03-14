@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Survey | Kisaan Krushi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand text-success fw-bold flex-grow-1" href="survey-form.html">
+                <i class="fa-solid fa-seedling me-2"></i>Kisaan Krushi
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-success bg-opacity-10 text-success me-3 px-3 py-2 rounded-pill" id="onlineStatus">
+                    <i class="fa-solid fa-wifi me-1"></i> Online
+                </span>
+                <button class="btn btn-outline-danger border-0" id="logoutBtn" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5 pb-5 max-w-md">
+        <div class="glass-card shadow-lg p-0 overflow-hidden">
+            <div class="bg-success bg-gradient p-4 text-white text-center">
+                <h4 class="fw-bold mb-0">Farmer Data Collection</h4>
+                <p class="mb-0 text-white-50"><small>Please ensure GPS location is turned on.</small></p>
+            </div>
+            
+            <form id="surveyForm" class="p-4">
+                <!-- Farmer Details -->
+                <h6 class="text-uppercase fw-bold text-muted mb-3"><i class="fa-solid fa-user me-2"></i>Personal Info</h6>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-dark">Farmer Name <span class="text-danger">*</span></label>
+                    <input type="text" id="farmer_name" class="form-control form-control-lg bg-light" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-dark">Phone Number <span class="text-danger">*</span></label>
+                    <input type="tel" id="phone_number" class="form-control form-control-lg bg-light" pattern="[0-9]{10}" required>
+                </div>
+
+                <!-- Location Details -->
+                <h6 class="text-uppercase fw-bold text-muted mb-3"><i class="fa-solid fa-location-dot me-2"></i>Location Data</h6>
+                
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small text-dark">Village <span class="text-danger">*</span></label>
+                        <input type="text" id="village" class="form-control bg-light" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small text-dark">Mandal <span class="text-danger">*</span></label>
+                        <input type="text" id="mandal" class="form-control bg-light" required>
+                    </div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small text-dark">District <span class="text-danger">*</span></label>
+                        <input type="text" id="district" class="form-control bg-light" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small text-dark">State <span class="text-danger">*</span></label>
+                        <input type="text" id="state" class="form-control bg-light" value="Telangana" required>
+                    </div>
+                </div>
+
+                <!-- GPS Capture -->
+                <div class="mb-4 rounded p-3 bg-light border border-secondary border-opacity-25 text-center">
+                    <button type="button" class="btn btn-outline-primary mb-2 rounded-pill fw-bold w-100" id="captureGpsBtn">
+                        <i class="fa-solid fa-satellite-dish me-2"></i> Capture GPS Co-ordinates
+                    </button>
+                    <p class="small text-muted mb-0" id="gpsStatus">Coordinates not captured yet.</p>
+                    <input type="hidden" id="latitude">
+                    <input type="hidden" id="longitude">
+                </div>
+
+                <!-- Agricultural Details -->
+                <h6 class="text-uppercase fw-bold text-muted mb-3"><i class="fa-solid fa-leaf me-2"></i>Farm Details</h6>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-dark">Crop Cultivated <span class="text-danger">*</span></label>
+                    <select id="crop" class="form-select form-select-lg bg-light" required>
+                        <option value="">Select Crop...</option>
+                        <option value="Rice">Rice</option>
+                        <option value="Cotton">Cotton</option>
+                        <option value="Maize">Maize</option>
+                        <option value="Sugarcane">Sugarcane</option>
+                        <option value="Mango">Mango</option>
+                        <option value="Chilli">Chilli</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-dark">Field Observations / Suggestion</label>
+                    <textarea id="suggestion" class="form-control bg-light" rows="3" placeholder="Enter findings or notes here..."></textarea>
+                </div>
+
+                <!-- Media Section -->
+                <h6 class="text-uppercase fw-bold text-muted mb-3"><i class="fa-solid fa-camera me-2"></i>Media Attachments</h6>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-dark">Farmer Photo <small class="fw-normal text-muted">(with GPS metadata)</small></label>
+                    <input type="file" id="photo" class="form-control" accept="image/*" capture="environment" onchange="previewPhoto(this)">
+                    <!-- Live Photo Preview -->
+                    <div id="photoPreviewBox" class="mt-2 d-none">
+                        <img id="photoPreview" src="#" alt="Photo Preview" class="survey-media-preview">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-dark">Audio Recording / Suggestion</label>
+                    <input type="file" id="audio" class="form-control" accept="audio/*" capture="microphone" onchange="previewAudio(this)">
+                    <!-- Live Audio Preview -->
+                    <div id="audioPreviewBox" class="mt-2 d-none">
+                        <div class="audio-player-container">
+                            <audio id="audioPreview" controls>
+                                <source id="audioPreviewSrc" src="#" type="audio/mpeg">
+                            </audio>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold shadow-sm" id="submitBtn">
+                    <i class="fa-solid fa-cloud-arrow-up me-2"></i> Submit Survey
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="fixed-bottom bg-white shadow-lg border-top d-flex justify-content-around py-2">
+        <a href="survey-form.html" class="text-center text-decoration-none text-success w-50 pb-1 pt-1 border-bottom border-success border-3">
+            <i class="fa-solid fa-pen-to-square fs-5 d-block mb-1"></i>
+            <small class="fw-bold">Submit</small>
+        </a>
+        <a href="my-surveys.html" class="text-center text-decoration-none text-muted w-50 pb-1 pt-1">
+            <i class="fa-solid fa-clock-rotate-left fs-5 d-block mb-1"></i>
+            <small class="fw-bold">History</small>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            requireAuth('user');
+
+            // Online/Offline listener to update badge UI
+            const updateStatus = () => {
+                const b = document.getElementById('onlineStatus');
+                if(navigator.onLine) {
+                    b.className = "badge bg-success bg-opacity-10 text-success me-3 px-3 py-2 rounded-pill";
+                    b.innerHTML = '<i class="fa-solid fa-wifi me-1"></i> Online';
+                } else {
+                    b.className = "badge bg-danger bg-opacity-10 text-danger me-3 px-3 py-2 rounded-pill";
+                    b.innerHTML = '<i class="fa-solid fa-wifi-slash me-1"></i> Offline Mode';
+                }
+            };
+            window.addEventListener('online', updateStatus);
+            window.addEventListener('offline', updateStatus);
+            updateStatus();
+
+            // GPS Feature
+            document.getElementById('captureGpsBtn').addEventListener('click', () => {
+                const btn = document.getElementById('captureGpsBtn');
+                const p = document.getElementById('gpsStatus');
+                
+                if (!navigator.geolocation) {
+                    p.innerHTML = '<span class="text-danger">Geolocation is not supported by your browser.</span>';
+                    return;
+                }
+                
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Fetching...';
+                
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = lon;
+                    
+                    p.innerHTML = `<span class="text-success fw-bold"><i class="fa-solid fa-check-circle me-1"></i> Lat: ${lat.toFixed(5)}, Lng: ${lon.toFixed(5)}</span>`;
+                    btn.innerHTML = '<i class="fa-solid fa-location-dot me-2"></i> Update Location';
+                    btn.className = "btn btn-outline-success mb-2 rounded-pill fw-bold w-100";
+                }, (err) => {
+                    p.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> Error: ${err.message}. Please enable location permissions.</span>`;
+                    btn.innerHTML = '<i class="fa-solid fa-satellite-dish me-2"></i> Try Again';
+                }, { enableHighAccuracy: true });
+            });
+
+            // Form Submit Logic
+            document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('submitBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+
+                // Grab references manually, FormData makes fetching easier
+                const formData = new FormData();
+                formData.append('farmer_name', document.getElementById('farmer_name').value);
+                formData.append('phone_number', document.getElementById('phone_number').value);
+                formData.append('village', document.getElementById('village').value);
+                formData.append('mandal', document.getElementById('mandal').value);
+                formData.append('district', document.getElementById('district').value);
+                formData.append('state', document.getElementById('state').value);
+                formData.append('crop', document.getElementById('crop').value);
+                formData.append('suggestion', document.getElementById('suggestion').value);
+                formData.append('latitude', document.getElementById('latitude').value);
+                formData.append('longitude', document.getElementById('longitude').value);
+
+                const photoFile = document.getElementById('photo').files[0];
+                if (photoFile) formData.append('photo', photoFile);
+
+                const audioFile = document.getElementById('audio').files[0];
+                if (audioFile) formData.append('audio', audioFile);
+
+                // Check Offline
+                if (!navigator.onLine) {
+                    // Extract data to JSON for local storage
+                    const obj = {};
+                    formData.forEach((value, key) => {
+                        // We will skip files in offline mode for simplicity in this implementation
+                        // A complex implementation would convert files to base64.
+                        if(typeof value === 'string') obj[key] = value;
+                    });
+                    
+                    const existing = JSON.parse(localStorage.getItem('offline_surveys') || '[]');
+                    existing.push(obj);
+                    localStorage.setItem('offline_surveys', JSON.stringify(existing));
+                    showToast('Saved offline. Will sync when network is restored', 'warning');
+                    
+                    document.getElementById('surveyForm').reset();
+                    resetGpsBtn();
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-2"></i> Submit Survey';
+                    return;
+                }
+
+                try {
+                    await apiFetch('/surveys', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    showToast('Survey submitted successfully!', 'success');
+                    document.getElementById('surveyForm').reset();
+                    resetGpsBtn();
+                    resetPreviews();
+                } catch (error) {
+                    showToast(error.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-2"></i> Submit Survey';
+                }
+            });
+
+            function resetGpsBtn() {
+                document.getElementById('gpsStatus').innerText = 'Coordinates not captured yet.';
+                const gpBtn = document.getElementById('captureGpsBtn');
+                gpBtn.innerHTML = '<i class="fa-solid fa-satellite-dish me-2"></i> Capture GPS Co-ordinates';
+                gpBtn.className = "btn btn-outline-primary mb-2 rounded-pill fw-bold w-100";
+                document.getElementById('latitude').value = '';
+                document.getElementById('longitude').value = '';
+            }
+
+            function resetPreviews() {
+                document.getElementById('photoPreviewBox').classList.add('d-none');
+                document.getElementById('photoPreview').src = '#';
+                document.getElementById('audioPreviewBox').classList.add('d-none');
+                document.getElementById('audioPreviewSrc').src = '#';
+                const audio = document.getElementById('audioPreview');
+                audio.pause();
+                audio.load();
+            }
+        });
+
+        // Live preview functions (must be global)
+        function previewPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('photoPreview');
+                    preview.src = e.target.result;
+                    document.getElementById('photoPreviewBox').classList.remove('d-none');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function previewAudio(input) {
+            if (input.files && input.files[0]) {
+                const url = URL.createObjectURL(input.files[0]);
+                const src = document.getElementById('audioPreviewSrc');
+                src.src = url;
+                const audio = document.getElementById('audioPreview');
+                audio.load();
+                document.getElementById('audioPreviewBox').classList.remove('d-none');
+            }
+        }
+    </script>
+</body>
+</html>
