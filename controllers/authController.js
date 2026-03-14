@@ -1,5 +1,5 @@
 const db = require('../database/db');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { logActivity } = require('../utils/logger');
 const { sendTelegramMessage } = require('../utils/telegram');
