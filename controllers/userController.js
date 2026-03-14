@@ -1,6 +1,6 @@
 const db = require('../database/db');
 const { logActivity } = require('../utils/logger');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 exports.getAllUsers = async (req, res) => {
     try {
